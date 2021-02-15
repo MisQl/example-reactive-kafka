@@ -10,7 +10,7 @@ import reactor.kafka.receiver.ReceiverRecord;
 @RequiredArgsConstructor
 public class KafkaConsumer implements CommandLineRunner {
 
-    private final KafkaReceiver<String, String> kafkaReceiver;
+    private final KafkaReceiver<String, Object> kafkaReceiver;
 
     @Override
     public void run(String... args) {

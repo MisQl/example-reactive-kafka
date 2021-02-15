@@ -21,7 +21,11 @@ public class KafkaPublisher implements CommandLineRunner {
     @Override
     public void run(String... args) {
         Flux.interval(Duration.ofSeconds(3))
-                .flatMap(i -> producerTemplate.send(SPRING_TOPIC, "message-" + i))
+                .flatMap(i -> producerTemplate.send(SPRING_TOPIC, new KafkaMessage1("message-" + i)))
+                .subscribe();
+
+        Flux.interval(Duration.ofSeconds(5))
+                .flatMap(i -> producerTemplate.send(SPRING_TOPIC, new KafkaMessage2("message-" + i)))
                 .subscribe();
     }
 }
