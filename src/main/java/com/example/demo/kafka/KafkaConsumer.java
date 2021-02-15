@@ -1,23 +1,22 @@
 package com.example.demo.kafka;
 
-import org.springframework.kafka.annotation.KafkaHandler;
-import org.springframework.kafka.annotation.KafkaListener;
+import lombok.RequiredArgsConstructor;
+import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-
-import static com.example.demo.kafka.KafkaConfig.SPRING_GROUP_ID;
-import static com.example.demo.kafka.KafkaConfig.SPRING_TOPIC;
+import reactor.kafka.receiver.KafkaReceiver;
+import reactor.kafka.receiver.ReceiverRecord;
 
 @Component
-@KafkaListener(groupId = SPRING_GROUP_ID, topics = SPRING_TOPIC)
-public class KafkaConsumer {
+@RequiredArgsConstructor
+public class KafkaConsumer implements CommandLineRunner {
 
-    @KafkaHandler
-    public void handleKafkaMessage1(KafkaMessage1 message) {
-        System.out.println("---> " + message);
-    }
+    private final KafkaReceiver<String, String> kafkaReceiver;
 
-    @KafkaHandler
-    public void handleKafkaMessage2(KafkaMessage2 message) {
-        System.out.println("---> " + message);
+    @Override
+    public void run(String... args) {
+        kafkaReceiver.receive()
+                .doOnNext(r -> r.receiverOffset().acknowledge())
+                .map(ReceiverRecord::value)
+                .subscribe(m -> System.out.println("---> receive: " + m));
     }
 }

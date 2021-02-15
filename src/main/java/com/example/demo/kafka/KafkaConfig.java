@@ -1,25 +1,28 @@
 package com.example.demo.kafka;
 
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
-import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+import org.apache.kafka.common.serialization.StringSerializer;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
-import org.springframework.kafka.core.ConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
-import org.springframework.kafka.core.DefaultKafkaProducerFactory;
-import org.springframework.kafka.core.ProducerFactory;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
+import reactor.kafka.receiver.KafkaReceiver;
+import reactor.kafka.receiver.ReceiverOptions;
+import reactor.kafka.receiver.internals.ConsumerFactory;
+import reactor.kafka.receiver.internals.DefaultKafkaReceiver;
+import reactor.kafka.sender.KafkaSender;
+import reactor.kafka.sender.SenderOptions;
 
+import java.util.Collections;
 import java.util.Map;
 
 @Configuration
 public class KafkaConfig {
 
-    public static final String SPRING_TOPIC = "spring-topic-1";
+    public static final String SPRING_TOPIC = "spring-topic-101";
     public static final String SPRING_GROUP_ID = "spring-group-id-1";
 
     @Bean
@@ -28,19 +31,23 @@ public class KafkaConfig {
     }
 
     @Bean
-    ProducerFactory<Object, Object> producerFactory(KafkaProperties kafkaProperties) {
-        Map<String, Object> configs = kafkaProperties.buildAdminProperties();
-        configs.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        configs.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
+    KafkaReceiver kafkaReceiver(KafkaProperties kafkaProperties) {
+        Map<String, Object> props = kafkaProperties.buildProducerProperties();
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, SPRING_GROUP_ID);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
 
-        return new DefaultKafkaProducerFactory<>(configs);
+        ReceiverOptions<Object, Object> receiverOptions = ReceiverOptions.create(props).subscription(Collections.singleton(SPRING_TOPIC));
+        return new DefaultKafkaReceiver(ConsumerFactory.INSTANCE, receiverOptions);
     }
 
     @Bean
-    public ConsumerFactory<Object, Object> consumerFactory(KafkaProperties kafkaProperties) {
-        Map<String, Object> configs = kafkaProperties.buildAdminProperties();
-        Deserializer<Object> jsonDeserializer = new JsonDeserializer<>().trustedPackages("*");
+    KafkaSender<String, String> kafkaSender(KafkaProperties kafkaProperties) {
+        Map<String, Object> props = kafkaProperties.buildProducerProperties();
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-        return new DefaultKafkaConsumerFactory<>(configs, jsonDeserializer, jsonDeserializer);
+        SenderOptions<String, String> senderOptions = SenderOptions.create(props);
+        return KafkaSender.create(senderOptions);
     }
 }
