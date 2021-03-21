@@ -1,1 +1,7 @@
-
+spring:
+  kafka:
+    bootstrap-servers: XXX.servicebus.windows.net:9093
+    properties:
+      sasl.jaas.config: org.apache.kafka.common.security.plain.PlainLoginModule required username="$ConnectionString" password="Endpoint=sb://XXX.servicebus.windows.net/;SharedAccessKeyName=XXX;SharedAccessKey=XXX";
+      sasl.mechanism: PLAIN
+      security.protocol: SASL_SSL
