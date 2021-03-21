@@ -1,22 +1,25 @@
 package com.example.demo.kafka;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.boot.CommandLineRunner;
+import org.springframework.kafka.annotation.KafkaHandler;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
-import reactor.kafka.receiver.KafkaReceiver;
-import reactor.kafka.receiver.ReceiverRecord;
+
+import static com.example.demo.kafka.KafkaConfig.SPRING_GROUP_ID;
+import static com.example.demo.kafka.KafkaConfig.SPRING_TOPIC;
 
 @Component
-@RequiredArgsConstructor
-public class KafkaConsumer implements CommandLineRunner {
+@KafkaListener(topics = SPRING_TOPIC, groupId = SPRING_GROUP_ID)
+public class KafkaConsumer {
 
-    private final KafkaReceiver<String, Object> kafkaReceiver;
+    @KafkaHandler
+    public void consume(@Payload KafkaMessage1 kafkaMessage) {
+        System.out.println("---> receive: " + kafkaMessage);
+    }
 
-    @Override
-    public void run(String... args) {
-        kafkaReceiver.receive()
-                .doOnNext(r -> r.receiverOffset().acknowledge())
-                .map(ReceiverRecord::value)
-                .subscribe(m -> System.out.println("---> receive: " + m));
+    @KafkaHandler
+    public void consume(@Payload KafkaMessage2 kafkaMessage, @Header("token") String token) {
+        System.out.println("---> receive: " + kafkaMessage + " token: " + token);
     }
 }
